@@ -1,43 +1,45 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Animatable from 'react-native-animatable';
 
 export default function TaskList({ data, handleDelete }) {
     return (
-        <Animatable.View
-            style={styles.container}
-            animation='bounceIn'
-            useNativeDriver
-        >
-            <TouchableOpacity onPress={() => handleDelete(data)}>
-                <Ionicons name="md-checkmark-circle" size={30} color="#121212" />
-            </TouchableOpacity>
-            <View>
-                <Text style={styles.task}>{data.task}</Text>
+        <View style={{marginBottom: 20}}>
+            <View style={styles.container}>
+                <View style={{flexDirection: 'row'}}>
+                    <TouchableOpacity onPress={ () => handleDelete(data)}>
+                        <Ionicons name='md-checkmark-circle' size={30} color={"#3d405b"} />
+                    </TouchableOpacity>
+                    <Text style={styles.item}> {data.key} </Text>
+                </View>
             </View>
-        </Animatable.View>
+            <View style={styles.container}>
+                <View>
+                    <Text style={styles.item}> {data.item} </Text>
+                </View>
+            </View>
+        </View>
     )
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        margin: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFF',
+        margin: 3,
+        flexDirection: 'column',
+        backgroundColor: '#ffff',
         borderRadius: 5,
-        padding: 7,
+        padding: 5,
         elevation: 1.5,
         shadowColor: '#000',
         shadowOpacity: 0.2,
         shadowOffset: {
             width: 1,
-            height: 3
+            height: 3,
         }
     },
-    task: {
-        color: "#121212",
+    item: {
+        color: '#000',
         fontSize: 20,
         paddingLeft: 8,
         paddingRight: 20,

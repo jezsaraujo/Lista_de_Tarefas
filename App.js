@@ -1,162 +1,198 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity, FlatList, Modal, TextInput } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import TaskList from './src/components/TaskList';
-import * as Animatable from 'react-native-animatable';
+// Importação das bibliotecas
+import React, { useState, useCallback, useEffect } from "react";
+import { View, Text, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity, FlatList, Modal, TextInput } from "react-native"
+import { Ionicons } from "@expo/vector-icons";
 
-const AnimatableBtn = Animatable.createAnimatableComponent(TouchableOpacity);
+// Importação dos componentes
+import TaskList from "./src/components/TaskList";
 
-
-
+// Importação do async Storage
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 export default function App() {
-  const [task, setTask] = useState([]);
 
+  const [item, setItem] = useState([]);
   const [open, setOpen] = useState(false);
-  const [input, setInput] = useState('');
+  const [date, setDate] = useState('');
+  const [commitment, setCommitment] = useState('');
 
-  function handleAdd() {
-    if (input === '') return;
-
-    const data = {
-      key: input,
-      task: input
-    };
-
-    setTask([...task, data]);
-    setOpen(false);
-    setInput('');
-
+  // Armazenamento de dados
+  const storeData = async (value) => {
+    try {
+      await AsyncStorage.setItem('@data', JSON.stringify(value));
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-
-  const handleDelete = useCallback(
-    (data) => {
-      const find = task.filter(r => r.key !== data.key);
-      setTask(find);
-      
+  // Leitura de dados
+  const getData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('@data');
+      if (value) {
+        setItem(JSON.parse(value));
+      }
+    } catch (error) {
+      console.log(error)
     }
-  );
+  }
 
+  useEffect(() => {
+    getData();
+  }, [])
 
+  useEffect(() => {
+    storeData(item);
+  }, [item]);
+
+  function handleAdd() {
+    if (!date || !commitment) {
+      alert('Os campos não podem ficar em branco');
+      return; // se o campo estiver vazio, ele retorna e não faz nada
+    }
+
+    const data = {
+      key: date,
+      item: commitment
+    };
+    
+    // "...task" vai sempre add "data" ao final do vetor
+    setItem([...item, data]);
+    setOpen(false); // Fecha o campo de modal
+    setDate(''); // Limpa o campo de data
+    setCommitment(''); // Limpa o campo de compromissos
+  }
+
+  const handleDelete = useCallback((data) => {
+    const find = item.filter(r => r.key !== data.key)
+    setItem(find);
+  })
+  
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container}> {/* SafeAreaView -> Serve para ajustar a visualização no iphone, no android fica normal */}
+      <StatusBar backgroundColor="#121d31" barStyle="light-content" />
 
-      <StatusBar backgroundColor='#171d31' barStyle="ligth-content" />
       <View style={styles.content}>
-        <Text style={styles.title}> Minhas Tarefas </Text>
+        <Text style={styles.title}> Compromissos da Jess Araujo </Text>
       </View>
 
-      <FlatList
+      {/* Construção da lista */}
+      <FlatList 
         marginHorizontal={10}
-        showsHorizontalScrollIndicator={false} // desativa barra de scroll
-        data={task} // contem todos itens da lista
-        keyExtractor={(item) => String(item.key)} // cada item tem uma chave
-        renderItem={({ item }) => <TaskList data={item} handleDelete={handleDelete} />} // rederiza (mostra) os itens
+        showsHorizontalScrollIndicator={false}
+        data={item}
+        keyExtractor={ (item) => String(item.key) }
+        renderItem={ ({ item }) => <TaskList data={item} handleDelete={handleDelete} /> }
       />
 
+      {/* Tela modal */}
       <Modal animationType="slide" transparent={false} visible={open}>
-        <SafeAreaView>
-          <Animatable.View style={styles.modalBody} animation="fadeInUp" useNativeDriver >
-
+        <SafeAreaView style={styles.modal}>
+            
             <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setOpen(false)}>
-                <Ionicons size={35} style={{ marginLeft: 5, marginRight: 5 }} name="md-arrow-back"></Ionicons>
+              <TouchableOpacity onPress={ () => setOpen(false) }>
+                <Ionicons style={{marginLeft: 5, marginRight: 5}} name="md-arrow-back" size={40} color={"#f4f1de"} />
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>Nova tarefa</Text>
+              <Text style={styles.modalTitle}>Novo compromisso</Text>
             </View>
 
-            <TextInput
-              multiline={true}
-              placeholderTextColor="#747474"
-              autoCorrect={false}
-              placeholder="O que precisa fazer hoje"
-              style={styles.input}
-              value={input}
-              onChangeText={(text) => setInput(text)}
+            {/* Incluir nova tarefa - área de texto e botão */}
+            <View style={styles.modalBody} animation={"fadeInUp"} useNativeDriver>
+              <TextInput 
+                placeholderTextColor={"#747474"}
+                autoCorrect={false}
+                placeholder="Entre com a data"
+                style={styles.input}
+                value={date}
+                onChangeText={ (texto) => setDate(texto) }
+              />
+              <TextInput 
+                multiline={true}
+                placeholderTextColor={"#747474"}
+                autoCorrect={false}
+                placeholder="Entre com o compromisso"
+                style={styles.input}
+                value={commitment}
+                onChangeText={ (texto) => setCommitment(texto) }
+              />  
+              <TouchableOpacity onPress={handleAdd} style={styles.handleAdd}>
+                <Text style={styles.handleAddText}>Cadastrar</Text>
+              </TouchableOpacity>
+            </View>
 
-              placeholder='O que precisa fazer hoje?'
-              style={styles.input}
-            />
-
-            <TouchableOpacity style={styles.handleAdd} onPress={handleAdd}>
-              <Text style={styles.handleAddText}>Cadastrar</Text>
-            </TouchableOpacity>
-
-          </Animatable.View>
-
-        </SafeAreaView>
+          </SafeAreaView>
       </Modal>
 
-      <AnimatableBtn style={styles.fab}
-        style={styles.fab}
-        useNativeDriver
-        animation="bounceInUp"
-        duration={1500}
-        onPress={() => setOpen(true)}
-      >
-        <Ionicons name="ios-add" size={35} color="#FFF" />
-      </AnimatableBtn>
-
+      {/* Botão para add nova tarefa */}
+      <TouchableOpacity style={styles.fab} onPress={ () => setOpen(true) }>
+        <Ionicons name="ios-add" size={35} color={"#fff"} />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#171d31'
+    backgroundColor: "#2F4858"
   },
   title: {
     marginTop: 10,
     paddingBottom: 10,
     fontSize: 25,
     textAlign: "center",
-    color: 'white'
+    color: "#fff"
   },
   fab: {
     position: 'absolute',
     width: 60,
-    heigth: 60,
-    backgroundColor: '#0094FF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: 60,
+    backgroundColor: "#B38AAE",
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 30,
     right: 25,
     bottom: 25,
     elevation: 2,
     zIndex: 9,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowOffset: {
       width: 1,
       height: 3,
     }
   },
-
-
   modal: {
     flex: 1,
-    backgroundColor: '#171d31',
+    backgroundColor: '#2F4858',
   },
   modalHeader: {
     marginLeft: 10,
     marginTop: 20,
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   modalTitle: {
     marginLeft: 15,
     fontSize: 23,
-    color: '#FFF'
+    color: '#f4f1de',
   },
   modalBody: {
-    backgroundColor: '#AAA',
-    textAlign: 'center'
+    marginTop: 15,
   },
-
-
+  input: {
+    fontSize: 15,
+    marginLeft: 10,
+    marginRight: 10,
+    marginVertical: 10,
+    backgroundColor: "#FFF",
+    padding: 9,
+    textAlignVertical: 'top',
+    color: '#000',
+    borderRadius: 5,
+  },
   handleAdd: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#B38AAE',
     marginTop: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -166,9 +202,8 @@ const styles = StyleSheet.create({
     borderRadius: 5
   },
   handleAddText: {
-    fontSize: 20,
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16
   }
-
-
-
 })
